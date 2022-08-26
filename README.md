@@ -1,2 +1,4 @@
 # cdc
-collect data &amp; save them
+Collect data from Deribit &amp; save them for future uses. 
+
+
