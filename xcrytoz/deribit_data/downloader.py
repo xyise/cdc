@@ -1,27 +1,17 @@
-import io, sys
-from datetime import datetime
 import time
 from time import sleep
 import json
 import websocket
-import itertools
-from file_io_utils import *
+
+
+# import within package
+from ..common_utils import Col2Str, get_logger
+
+_LOGGER = get_logger(__name__)
 
 # TODOs:
 # logging
 # async programming for websocket
-
-class Col2Str():
-    expiration_timestamp = 'expiration_timestamp'
-    strike = 'strike'
-    instrument_name = 'instrument_name'
-    result = 'result'
-    future = 'future'
-    option = 'option'
-
-    def __repr__(self):
-        return ','.join([x for x in self.__dir__() if not x.startswith('__')])
-
 
 # this is to make the variable name shorter
 _cst = Col2Str()
@@ -120,33 +110,5 @@ class DeribitDownloader_Simple:
         }
         return msg
 
-def batch_download_and_zip(batch_id: str, save_folder: str):
 
-    currencies = ['BTC', 'ETH', 'SOL']
-    kinds = ['future', 'option']
-
-    if not os.path.exists(save_folder):
-        # making a save folder
-        os.makedirs(save_folder)
-
-    downloader = DeribitDownloader_Simple()
-
-    for currency, kind in itertools.product(currencies, kinds):
-        start_timestamp = int(time.time())
-        print('downloading ' + currency + ' ' + kind)
-        data = downloader.download_tickers(currency, kind)
-        end_timestamp = int(time.time())
-        attribs = {
-            'batch_id': batch_id,
-            'save_folder': save_folder,
-            'time_start': start_timestamp,
-            'time_end': end_timestamp
-        }
-
-        file_path = os.path.join(save_folder, '_'.join([batch_id, currency, kind]) + '.zip')
-        
-        print('writing to json ' + file_path)
-        write_zipped_json(data, attribs, file_path)
-    
-    print('done')
 
