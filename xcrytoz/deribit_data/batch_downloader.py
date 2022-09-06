@@ -47,21 +47,24 @@ class BatchDownloaderZip(ABC):
         for currency, kind in itertools.product(self.currencies, self.kinds):
             start_timestamp = int(time.time())
 
-            _LOGGER.info('downloading ' + currency + ' ' + kind)
-            data = self.execute_download(currency, kind)
-            end_timestamp = int(time.time())
-            attribs = {
-                'batch_id': self.writer.file_header,
-                'save_folder': self.writer.save_folder,
-                'time_start': start_timestamp,
-                'time_end': end_timestamp
-            }
+            try:
+                _LOGGER.info('downloading ' + currency + ' ' + kind)
+                data = self.execute_download(currency, kind)
+                end_timestamp = int(time.time())
+                attribs = {
+                    'batch_id': self.writer.file_header,
+                    'save_folder': self.writer.save_folder,
+                    'time_start': start_timestamp,
+                    'time_end': end_timestamp
+                }
 
-            file_path = self.writer.write(data, attribs, currency, kind)        
+                file_path = self.writer.write(data, attribs, currency, kind)        
 
-            _LOGGER.info('wrote to json ' + file_path)
+                _LOGGER.info('wrote to json ' + file_path)
+            
+            except Exception as ex:
+                _LOGGER.error("FAILED: " + currency + '/' + kind + '. Error: ' + str(ex))
 
-        _LOGGER.info('done')
 
 class BatchDownloaderZip_TickerInfo(BatchDownloaderZip):
 

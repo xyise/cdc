@@ -33,10 +33,9 @@ if __name__ == '__main__':
         ts_utcnow_in_msec = Converter.dt2ms_int(dt_utc_now)
         root_folder = os.path.join(home_path, 'data', target_folder)
         # now run. 
-        try:
-            BatchDownloaderZip_TickerInfo(root_folder, ts_utcnow_in_msec).download()
-        except:
-            _LOGGER.error("FAILED: ticker " + str(dt_utc_now))
+
+        BatchDownloaderZip_TickerInfo(root_folder, ts_utcnow_in_msec).download()
+
 
     elif run_type == 'last_trade':
         kinds = ['future', 'option']
@@ -47,10 +46,10 @@ if __name__ == '__main__':
         end_timestamp = Converter.dt2ms_int(end_datetime)
         start_timestamp = end_timestamp - 60 * 60 * 1000
 
-        try:
-            BatchDownloaderZip_LastTradeInfo(root_folder, start_timestamp, end_timestamp, kinds = kinds).download()
-        except:
-            _LOGGER.error("FAILED: last_trade" + str(dt_utc_now))
-            
+
+        BatchDownloaderZip_LastTradeInfo(root_folder, start_timestamp, end_timestamp, kinds = kinds).download()
+
     else:
         raise Exception('unknown run type: ' + run_type + '. either "ticker", or "last_trade"')
+
+    _LOGGER.info('done')
