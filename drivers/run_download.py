@@ -1,4 +1,5 @@
-from importlib.resources import path
+import argparse
+from ast import parse
 import os, sys, pathlib
 from datetime import datetime
 
@@ -12,12 +13,14 @@ from xcrytoz.deribit_data import BatchDownloaderZip_TickerInfo, BatchDownloaderZ
 
 if __name__ == '__main__':
     
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('run_type', help='which run to execute',choices=['ticker', 'last_trade'])
+    parser.add_argument('--live', help='run in the live mode.', action="store_true")
 
-    if len(args) == 1:
-        run_type = args[0]
-    else:
-        run_type = '' # 'last_trade' # 'last_trade'
+    args = parser.parse_args()
+    run_type = args.run_type
+
+    target_folder = 'deribit' if args.live else 'test_deribit'
 
     home_path = str(pathlib.Path.home())
 
@@ -27,13 +30,13 @@ if __name__ == '__main__':
 
         # we work everything using utc time (no local times)
         ts_utcnow_in_msec = Converter.dt2ms_int(dt_utc_now)
-        root_folder = os.path.join(home_path, 'data', 'deribit')
+        root_folder = os.path.join(home_path, 'data', target_folder)
         # now run. 
         BatchDownloaderZip_TickerInfo(root_folder, ts_utcnow_in_msec).download()
 
     elif run_type == 'last_trade':
         kinds = ['future', 'option']
-        root_folder = os.path.join(home_path, 'data', 'deribit_last_trade')
+        root_folder = os.path.join(home_path, 'data', target_folder + '_trade')
 
         # this is expected to run on hourly basis
         end_datetime = datetime(dt_utc_now.year, dt_utc_now.month, dt_utc_now.day, dt_utc_now.hour, 0, 0)

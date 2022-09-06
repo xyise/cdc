@@ -1,5 +1,7 @@
+import sys
 from datetime import datetime
 import logging
+
 
 class Converter:
 
@@ -29,7 +31,7 @@ def get_logger(name: str, level = logging.INFO):
     if my_logger.hasHandlers():
         return my_logger
 
-    c_handler = logging.StreamHandler()
+    c_handler = logging.StreamHandler(sys.stdout)
     c_handler.setLevel(level)
     c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
     c_handler.setFormatter(c_format)
