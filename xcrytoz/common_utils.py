@@ -18,6 +18,8 @@ class Converter:
         return datetime.fromtimestamp(millisec / 1000.0)
 
 
+
+
 def get_logger(name: str, level = logging.INFO):
 
     my_logger = logging.getLogger(name)
@@ -35,14 +37,3 @@ def get_logger(name: str, level = logging.INFO):
 
     return my_logger
 
-
-class Col2Str():
-    expiration_timestamp = 'expiration_timestamp'
-    strike = 'strike'
-    instrument_name = 'instrument_name'
-    result = 'result'
-    future = 'future'
-    option = 'option'
-
-    def __repr__(self):
-        return ','.join([x for x in self.__dir__() if not x.startswith('__')])

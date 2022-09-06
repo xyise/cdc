@@ -1,20 +1,19 @@
+from itertools import count
 import time
 from time import sleep
 import json
 import websocket
-
+import numpy as np
 
 # import within package
-from ..common_utils import Col2Str, get_logger
+from .deribit_fields import DeribitFields
+from ..common_utils import get_logger
 
 _LOGGER = get_logger(__name__)
 
-# TODOs:
-# logging
-# async programming for websocket
 
 # this is to make the variable name shorter
-_cst = Col2Str()
+_cst = DeribitFields()
 
 class DeribitDownloader_Simple:
     ''' simple downloader using websocket. needs to be improved. '''
@@ -71,7 +70,51 @@ class DeribitDownloader_Simple:
             'missing': missing_ticker_instruments
         }
 
+    def download_last_trades(self, currency, kind, start_timestamp_exclusive, end_timestamp_inclusive, max_count=1000, ts_split=20):
+        
+        download_iter = self.get_iter_download_last_trades(currency, kind, start_timestamp_exclusive, end_timestamp_inclusive, max_count, ts_split)
+        return [r for r in download_iter]
 
+    def get_iter_download_last_trades(self, currency, kind, start_timestamp_exclusive, end_timestamp_inclusive, max_count=1000, ts_split=20, level = 0):
+
+        indent = '*   ' * level
+        
+        _LOGGER.info(indent + 'requesting from ' + str(start_timestamp_exclusive) + ' to ' + str(end_timestamp_inclusive))
+        recvd = self.get_last_trades_by_currency_and_time(currency, kind, start_timestamp_exclusive + 1, end_timestamp_inclusive, max_count)
+        if recvd['result']['has_more']:
+            _LOGGER.info(indent + 'Splitting into ' + str(ts_split) + ' sub-tasks')
+            ts_se = np.linspace(start_timestamp_exclusive, end_timestamp_inclusive, ts_split + 1)
+            for i in range(ts_split):
+                time.sleep(0.05)
+                ts_s = int(ts_se[i])
+                ts_e = int(ts_se[i+1])
+                yield from self.get_iter_download_last_trades(currency, kind, ts_s+1, ts_e, max_count, ts_split, level + 1)
+        else:
+            _LOGGER.info(indent + 'returning data')
+            yield recvd
+
+
+    def get_last_trades_by_instrument_and_time(self, instrument_name, 
+                    start_timestamp = None, end_timestamp = None, count = 10):
+        
+        self.ws.connect(self.deribit_ws_live)
+        msg = self.__make_get_last_trades_by_instrument_and_time(
+                        instrument_name, start_timestamp, end_timestamp, count)
+        received = self.__download_no_check(msg)
+        self.ws.close()
+ 
+        return received
+
+    def get_last_trades_by_currency_and_time(self, currency, kind, 
+        start_timestamp = None, end_timestamp = None, count = 10):
+    
+        self.ws.connect(self.deribit_ws_live)
+        msg = self.__make_get_last_trades_by_currency_and_time(
+                        currency, kind, start_timestamp, end_timestamp, count)
+        received = self.__download_no_check(msg)
+        self.ws.close()
+ 
+        return received
 
     def __download_no_check(self, msg: dict):
 
@@ -81,7 +124,6 @@ class DeribitDownloader_Simple:
         received = json.loads(self.ws.recv())
 
         # todo: probably needs to check whether the received has 'result' key.
-
         return received
 
 
@@ -110,5 +152,46 @@ class DeribitDownloader_Simple:
         }
         return msg
 
+    def __make_get_last_trades_by_instrument_and_time(self, 
+                    instrument_name, 
+                    start_timestamp=None, end_timestamp=None, count=10, id: int = None):
+
+        msg = {
+            "jsonrpc" : self.jsonrpc_version,
+            "id" : self.__make_now_timestamp_if_none(id),
+            "method" : "public/get_last_trades_by_instrument_and_time",
+            "params" : {
+                "instrument_name" : instrument_name,
+                "count" : count
+            }
+        }
+        if start_timestamp is not None:
+            msg["params"]["start_timestamp"] = start_timestamp
+        if end_timestamp is not None:
+            msg["params"]["end_timestamp"] = end_timestamp
+        
+        return msg
+
+
+    def __make_get_last_trades_by_currency_and_time(self, 
+                    currency, kind,  
+                    start_timestamp=None, end_timestamp=None, count=10, id: int = None):
+
+        msg = {
+            "jsonrpc" : self.jsonrpc_version,
+            "id" : self.__make_now_timestamp_if_none(id),
+            "method" : "public/get_last_trades_by_currency_and_time",
+            "params" : {
+                "currency": currency,
+                "kind": kind,
+                "count" : count
+            }
+        }
+        if start_timestamp is not None:
+            msg["params"]["start_timestamp"] = start_timestamp
+        if end_timestamp is not None:
+            msg["params"]["end_timestamp"] = end_timestamp
+        
+        return msg
 
 
