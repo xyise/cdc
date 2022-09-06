@@ -8,15 +8,16 @@ for pp in [str(pathlib.Path(__file__).resolve().parent.parent)]:
     if pp not in sys.path:
         sys.path.append(pp)
 
-from xcrytoz.common_utils import Converter
+from xcrytoz.common_utils import Converter, get_logger
 from xcrytoz.deribit_data import BatchDownloaderZip_TickerInfo, BatchDownloaderZip_LastTradeInfo
+
+_LOGGER = get_logger(__name__)
 
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('run_type', help='which run to execute',choices=['ticker', 'last_trade'])
     parser.add_argument('--live', help='run in the live mode.', action="store_true")
-
     args = parser.parse_args()
     run_type = args.run_type
 
@@ -32,7 +33,10 @@ if __name__ == '__main__':
         ts_utcnow_in_msec = Converter.dt2ms_int(dt_utc_now)
         root_folder = os.path.join(home_path, 'data', target_folder)
         # now run. 
-        BatchDownloaderZip_TickerInfo(root_folder, ts_utcnow_in_msec).download()
+        try:
+            BatchDownloaderZip_TickerInfo(root_folder, ts_utcnow_in_msec).download()
+        except:
+            _LOGGER.error("FAILED: ticker " + str(dt_utc_now))
 
     elif run_type == 'last_trade':
         kinds = ['future', 'option']
@@ -43,7 +47,10 @@ if __name__ == '__main__':
         end_timestamp = Converter.dt2ms_int(end_datetime)
         start_timestamp = end_timestamp - 60 * 60 * 1000
 
-        BatchDownloaderZip_LastTradeInfo(root_folder, start_timestamp, end_timestamp, kinds = kinds).download()
-
+        try:
+            BatchDownloaderZip_LastTradeInfo(root_folder, start_timestamp, end_timestamp, kinds = kinds).download()
+        except:
+            _LOGGER.error("FAILED: last_trade" + str(dt_utc_now))
+            
     else:
         raise Exception('unknown run type: ' + run_type + '. either "ticker", or "last_trade"')

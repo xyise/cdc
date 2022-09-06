@@ -82,7 +82,7 @@ class BatchDownloaderZip_TickerInfo(BatchDownloaderZip):
 class BatchDownloaderZip_LastTradeInfo(BatchDownloaderZip):
 
     def __init__(self, root_folder: str, start_timestamp: int, end_timestamp: int, 
-                currencies = ['BTC', 'ETH', 'SOL'], kinds = ['option']):
+                currencies = ['BTC', 'ETH', 'SOL'], kinds = ['option'], ts_split: int = 20):
 
         dt_s, dt_e = Converter.ms2dt(start_timestamp), Converter.ms2dt(end_timestamp)
         save_subfolder = self.get_month_str(dt_e)
@@ -90,5 +90,5 @@ class BatchDownloaderZip_LastTradeInfo(BatchDownloaderZip):
 
         super().__init__(root_folder, save_subfolder, file_header, currencies, kinds)
 
-        self.execute_download = lambda c, k: self.downloader.download_last_trades(c, k, start_timestamp, end_timestamp)
+        self.execute_download = lambda c, k: self.downloader.download_last_trades(c, k, start_timestamp, end_timestamp, ts_split=ts_split)
 
