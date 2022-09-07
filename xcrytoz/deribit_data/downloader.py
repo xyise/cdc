@@ -6,7 +6,7 @@ import websocket
 import numpy as np
 
 # import within package
-from .deribit_fields import DeribitFields
+from .shared_structures import DeribitFields
 from ..common_utils import get_logger
 
 _LOGGER = get_logger(__name__)

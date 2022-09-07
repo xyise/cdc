@@ -15,7 +15,7 @@ from xcrytoz.deribit_data import ConverterToDF
 
 
 from .utils import *
-from ..deribit_data.deribit_fields import DeribitFields
+from ..deribit_data.shared_structures import DeribitFields
 
 #from ..common_utils import get_logger, Converter
 #from .downloader import DeribitDownloader_Simple
