@@ -8,6 +8,7 @@ class ConstantsBase():
     def __repr__(self):
         return ','.join([x for x in self.__dir__() if not x.startswith('__')])
 
+
 class DeribitConstants(ConstantsBase):
 
     data = 'data'
@@ -16,10 +17,11 @@ class DeribitConstants(ConstantsBase):
     attributes_file_name = 'attributes.json'
     YYYYMMDDhhmmss = '%Y%m%d%H%M%S'
     YYYYMM = '%Y%m'
-    
+
+
 class DeribitFields(ConstantsBase):
     # keys
-    
+
     delta = 'delta'
     expiration_timestamp = 'expiration_timestamp'
     greeks = 'greeks'
@@ -36,7 +38,6 @@ class DeribitFields(ConstantsBase):
 
     # values
     future = 'future'
-    option = 'option'    
+    option = 'option'
     call = 'call'
     put = 'put'
-

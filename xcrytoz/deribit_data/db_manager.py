@@ -1,16 +1,9 @@
-import os
-from collections import namedtuple
-from tabnanny import check
-from typing import List
-from datetime import datetime
-import numpy as np
-import pandas as pd
 import pymongo as mdb
 
-from ..common_utils import Converter, get_logger
-from .shared_structures import TickerBatchInfo
+from ..common_utils import get_logger
 
 _LOGGER = get_logger(__name__)
+
 
 class DBManager:
 
@@ -27,17 +20,16 @@ class DBManager:
     s_ticker_batch = 'ticker_batch'
     s_last_trade = 'last_trade'
 
-
     def __init__(self, db_name='CDC', host='mongodb://localhost', port=27017):
 
         self.db_client = mdb.MongoClient(host=host, port=port)
         self.db_name = db_name
-        self.db = self.db_client[db_name] # this is Mongo DB way connecting to a database
+        self.db = self.db_client[db_name]  # this is Mongo DB way connecting to a database
 
         self.ticker_batch_col_name = self.s_ticker_batch
         self.last_trade_col_name = self.s_last_trade
 
-        #### collections:
+        # collections:
         # ticker batches
         self.col_ticker_batch = self.db[self.ticker_batch_col_name]
         self.col_ticker_batch.create_index([(self.s_batch_timestamp, mdb.ASCENDING)])
@@ -50,15 +42,15 @@ class DBManager:
             self.s_batch_timestamp: batch_timestamp,
             self.s_currency: currency,
             self.s_kind: kind
-            }
+        }
 
-    def insert_ticker_batch(self, batch_timestamp: int, currency, kind, batch, check_exists = True) -> None:
+    def insert_ticker_batch(self, batch_timestamp: int, currency, kind, batch, check_exists=True) -> None:
 
         ticker_batch = self.__get_ticker_batch_keys(batch_timestamp, currency, kind)
 
         b_insert = True
 
-        if check_exists:        
+        if check_exists:
             b_insert = self.col_ticker_batch.count_documents(ticker_batch) == 0
 
         if b_insert:
@@ -73,11 +65,10 @@ class DBManager:
     def find_ticker_batch(self, batch_timestamp: int, currency, kind) -> dict:
 
         res = self.col_ticker_batch.find_one(
-                self.__get_ticker_batch_keys(batch_timestamp, currency, kind))
+            self.__get_ticker_batch_keys(batch_timestamp, currency, kind))
 
         return res
-    
+
     def exist_ticker_batch(self, batch_timestamp, currency, kind) -> bool:
 
         return self.col_ticker_batch.count_documents(self.__get_ticker_batch_keys(batch_timestamp, currency, kind)) > 0
-

@@ -1,23 +1,22 @@
+import itertools
 import json
 import os
-from typing import Callable, Iterator, List, Dict, Tuple, Any
-from datetime import datetime, timedelta
-from abc import abstractclassmethod, ABC
-import itertools
 import time
 import zipfile
-import numpy as np
-import pandas as pd
+from abc import abstractclassmethod
+from datetime import datetime
+from typing import List
 
-from ..common_utils import get_logger, Converter
-from .shared_structures import DeribitFields, DeribitConstants, TickerBatchInfo
+import numpy as np
+
+from ..common_utils import Converter, get_logger
 from .downloader import DeribitDownloader_Simple
+from .shared_structures import DeribitConstants, TickerBatchInfo
 
 _LOGGER = get_logger(__name__)
 
 # this is to make the variable name shorter
 _dcs = DeribitConstants()
-_dfc = DeribitFields()
 
 
 class BatchDownloader:
@@ -28,12 +27,12 @@ class BatchDownloader:
         self.batch_id = batch_id
         self.save_folder = os.path.join(root_folder, save_folder_name)
         self.downloader = DeribitDownloader_Simple()
-    
+
     def download_batches(self, currencies: List[str], kinds: List[str]):
 
         if not os.path.exists(self.save_folder):
             os.makedirs(self.save_folder)
-        
+
         start_timestamp = int(time.time())
         for currency, kind in itertools.product(currencies, kinds):
             try:
@@ -47,16 +46,16 @@ class BatchDownloader:
                     'time_end': end_timestamp
                 }
 
-                file_path = self.__write_zip(data, attribs, currency, kind) 
+                file_path = self.__write_zip(data, attribs, currency, kind)
                 _LOGGER.info('wrote to json ' + file_path)
-            
+
             except Exception as ex:
                 _LOGGER.error("FAILED: " + currency + '/' + kind + '. Error: ' + str(ex))
 
     def __write_zip(self, data: dict, attributes: dict, currency: str, kind: str) -> str:
 
         # create a data structure with data and attrbutes
-        to_save = {_dcs.attributes_file_name: attributes, _dcs.data_file_name:data}
+        to_save = {_dcs.attributes_file_name: attributes, _dcs.data_file_name: data}
 
         zip_file_path = os.path.join(self.save_folder, '_'.join([self.batch_id, currency, kind]) + '.zip')
 
@@ -65,7 +64,7 @@ class BatchDownloader:
             for fn, content in to_save.items():
                 dumped_json = json.dumps(content, ensure_ascii=False, indent=4)
                 zip_file.writestr(fn, data=dumped_json)
-            
+
             zip_file.testzip()
 
         return zip_file_path
@@ -74,6 +73,7 @@ class BatchDownloader:
     def _execute_download(self, currency, kind):
         pass
 
+
 class TickerBatchDownloader(BatchDownloader):
 
     def __init__(self, root_folder, timestamp):
@@ -81,9 +81,10 @@ class TickerBatchDownloader(BatchDownloader):
         save_folder_name = dt.strftime(_dcs.YYYYMM)
         batch_id = dt.strftime(_dcs.YYYYMMDDhhmmss)
         super().__init__(root_folder, save_folder_name, batch_id)
-    
+
     def _execute_download(self, currency, kind):
         return self.downloader.download_tickers(currency, kind)
+
 
 class LastTradeBatchDownloader(BatchDownloader):
 
@@ -98,14 +99,15 @@ class LastTradeBatchDownloader(BatchDownloader):
 
         super().__init__(root_folder, save_folder_name, batch_id)
 
-
     def _execute_download(self, currency, kind):
         return self.downloader.download_last_trades(currency, kind, self.start_timestamp, self.end_timestamp)
+
 
 class BatchFileManager:
 
     def __init__(self, root_folder):
         self.root_folder = root_folder
+
     def read(self, file_path_without_root_folder: str):
 
         file_path = os.path.join(self.root_folder, file_path_without_root_folder)
@@ -114,9 +116,10 @@ class BatchFileManager:
             data = json.loads(zip_file.read(_dcs.data_file_name))
             attribs = json.loads(zip_file.read(_dcs.attributes_file_name))
 
-        return {_dcs.data:data, _dcs.attributes:attribs}
+        return {_dcs.data: data, _dcs.attributes: attribs}
 
-    def get_ticker_batch_file_infos(self, from_timestamp: int = None, to_timestamp: int = None) -> List[TickerBatchInfo]:
+    def get_ticker_batch_file_infos(self, from_timestamp: int = None, to_timestamp: int = None)\
+            -> List[TickerBatchInfo]:
 
         if from_timestamp is None:
             from_timestamp = -np.inf
@@ -124,8 +127,8 @@ class BatchFileManager:
             to_timestamp = np.inf
 
         # find all subfolders with digits
-        data_folder_names = sorted([path.name for path in os.scandir(self.root_folder) 
-                            if (path.is_dir() and os.path.basename(path.path).isdigit())])
+        data_folder_names = sorted([path.name for path in os.scandir(self.root_folder)
+                                    if (path.is_dir() and os.path.basename(path.path).isdigit())])
 
         # name, folder pairs
         file_infos = []

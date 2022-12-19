@@ -1,22 +1,25 @@
 import argparse
-from ast import parse
-import os, sys, pathlib
+import os
+import pathlib
+import sys
 from datetime import datetime
+
+from xcrytoz.common_utils import Converter, get_logger
+from xcrytoz.deribit_data import (LastTradeBatchDownloader,
+                                  TickerBatchDownloader)
 
 # to add path required (required before packageds)
 for pp in [str(pathlib.Path(__file__).resolve().parent.parent)]:
     if pp not in sys.path:
         sys.path.append(pp)
 
-from xcrytoz.common_utils import Converter, get_logger
-from xcrytoz.deribit_data import TickerBatchDownloader, LastTradeBatchDownloader
 
 _LOGGER = get_logger(__name__)
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('run_type', help='which run to execute',choices=['ticker', 'last_trade'])
+    parser.add_argument('run_type', help='which run to execute', choices=['ticker', 'last_trade'])
     parser.add_argument('--live', help='run in the live mode.', action="store_true")
     args = parser.parse_args()
     run_type = args.run_type
@@ -35,10 +38,9 @@ if __name__ == '__main__':
         # we work everything using utc time (no local times)
         ts_utcnow_in_msec = Converter.dt2ms_int(dt_utc_now)
         root_folder = os.path.join(home_path, 'data', target_folder)
-        # now run. 
+        # now run.
 
         TickerBatchDownloader(root_folder, ts_utcnow_in_msec).download_batches(currencies, kinds)
-
 
     elif run_type == 'last_trade':
         root_folder = os.path.join(home_path, 'data', target_folder + '_trade')
